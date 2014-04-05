@@ -13,8 +13,9 @@ gem 'active_attr'
 gem 'delayed_job_active_record', '~> 4.0.0'
 gem "slim-rails" if yes?('Use slim?')
 gem "polyamorous", :github => "activerecord-hackery/polyamorous"
+gem 'mini_magick'
+gem 'carrierwave'
 # gem 'whenever', require: false if yes?('Use whenever?')
-gem "polyamorous", :github => "activerecord-hackery/polyamorous"
 
 use_bootstrap = if yes?('Use sass-bootstrap?')
                   uncomment_lines 'Gemfile', "gem 'therubyracer'"
@@ -45,17 +46,18 @@ gem_group :development do
   gem 'quiet_assets'
 end
 
-run "sed -i -e \"s/gem 'turbolinks'/# gem 'turbolinks'/\" Gemfile"
+run "sed \"s/gem 'turbolinks'/# gem 'turbolinks'/\" Gemfile"
+run "sed \"s/gem 'bycript-ruby'/# gem 'bycript'/\" Gemfile &> /dev/null"
+run "bundle install --path vendor/bundle"
 
-run_bundle
 generate 'kaminari:config'
 generate 'rspec:install'
 remove_dir 'test'
 
 if use_bootstrap
   generate 'simple_form:install', '--bootstrap'
-  run "sed \"12i *= require bootstrap/\" app/assets/stylesheets/application.css"
-  run "sed -i -e \"s/= require turbolinks/= require bootstrap/\" app/assets/javascripts/application.js"
+  run "sed \"12i *= require bootstrap/\" app/assets/stylesheets/application.css &> /dev/null"
+  run "sed \"s/= require turbolinks/= require bootstrap/\" app/assets/javascripts/application.js &> /dev/null"
 
   create_file 'app/assets/stylesheets/base.css.scss' do
      body = <<EOS
@@ -70,6 +72,7 @@ end
 
 use_heroku = if yes?('Use heroku?')
                gem 'rails_12factor', group: :production
+               run "bundle install --path vendor/bundle"
                true
              else
                false
@@ -78,7 +81,7 @@ use_heroku = if yes?('Use heroku?')
 if use_heroku
   if yes?('Deploy heroku staging?')
     run 'heroku create --remote staging'
-    git push: 'staging master'
+    git push: 'staging master  &> /dev/null'
   end
 end
 
@@ -155,9 +158,9 @@ create_file 'app/decorators/.gitkeep'
 # ----------------------------------------------------------------
 case gem_for_database
   when 'mysql2'
-    run "sed -i -e \"s/#{app_name}_test/#{app_name}_test<%= ENV[\\'TEST_ENV_NUMBER\\']%>/g\" config/database.yml"
+    run "sed -i -e \"s/#{app_name}_test/#{app_name}_test<%= ENV[\\'TEST_ENV_NUMBER\\']%>/g\" config/database.yml &> /dev/null"
   when 'sqlite3'
-    run "sed -i -e \"s/db\\/test.sqlite3/db\\/test<%= ENV[\\'TEST_ENV_NUMBER\\']%>.sqlite3/g\" config/database.yml"
+    run "sed -i -e \"s/db\\/test.sqlite3/db\\/test<%= ENV[\\'TEST_ENV_NUMBER\\']%>.sqlite3/g\" config/database.yml &> /dev/null"
   else
 end
 
@@ -181,7 +184,7 @@ rake 'parallel:prepare'
 # git
 # ----------------------------------------------------------------
 git :init
-git add: "."
-git commit: %Q{ -m 'Initial commit' }
+git add: ".  &> /dev/null"
+git commit: %Q{ -m 'Initial commit' &> /dev/null }
 
 exit
