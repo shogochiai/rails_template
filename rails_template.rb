@@ -11,23 +11,19 @@ gem 'active_decorator', '~> 0.3.4'
 gem 'squeel', '~> 1.1.1'
 gem 'active_attr'
 gem 'delayed_job_active_record', '~> 4.0.0'
-gem "slim-rails" if yes?('Use slim?')
 gem "polyamorous", :github => "activerecord-hackery/polyamorous"
 gem 'mini_magick'
 gem 'carrierwave'
 # gem 'whenever', require: false if yes?('Use whenever?')
 
-use_bootstrap = if yes?('Use sass-bootstrap?')
-                  uncomment_lines 'Gemfile', "gem 'therubyracer'"
-                  gem 'bootstrap-sass'
-                  true
-                else
-                  false
-                end
+gem 'slim'
+gem 'slim-rails'
+gem 'bootstrap-sass'
+use_bootstrap = true
 
 gem_group :development, :test do
   gem 'rspec-rails'
-  gem "factory_girl_rails"
+  gem 'factory_girl_rails'
   gem 'capybara'
   gem 'capybara-webkit'
   gem 'shoulda-matchers'
@@ -46,8 +42,7 @@ gem_group :development do
   gem 'quiet_assets'
 end
 
-run "sed \"s/gem 'turbolinks'/# gem 'turbolinks'/\" Gemfile"
-run "sed \"s/gem 'bycript-ruby'/# gem 'bycript'/\" Gemfile &> /dev/null"
+run %Q(sed "s/gem 'turbolinks'/# gem 'turbolinks'/" Gemfile)
 run "bundle install --path vendor/bundle"
 
 generate 'kaminari:config'
@@ -64,25 +59,21 @@ if use_bootstrap
 @import "bootstrap";
 EOS
   end
-
-  remove_file 'app/views/layouts/application.html.erb'
 else
   generate 'simple_form:install'
 end
 
-use_heroku = if yes?('Use heroku?')
-               gem 'rails_12factor', group: :production
-               run "bundle install --path vendor/bundle"
-               true
-             else
-               false
-             end
+
+
+gem 'rails_12factor', group: :production
+run %Q(sed "s/# gem 'therubyracer'/gem 'therubyracer'/" Gemfile)
+
+run "bundle install --path vendor/bundle"
+use_heroku = true
 
 if use_heroku
-  if yes?('Deploy heroku staging?')
-    run 'heroku create --remote staging'
-    git push: 'staging master  &> /dev/null'
-  end
+  run 'heroku create --remote staging'
+  git push: 'staging master  &> /dev/null'
 end
 
 # Application settings
