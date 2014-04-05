@@ -1,50 +1,51 @@
 # coding: utf-8
-# These are based on https://github.com/patorash/rails_template
-dir = File.dirname(__FILE__)
 
-gem 'slim-rails'
-gem 'simple_form', github: 'plataformatec/simple_form', branch: 'master'
-gem 'ransack'
-gem 'kaminari'
+gem 'sorcery'
+gem 'simple_form', '~> 3.0.1'
+gem 'ransack', '~> 1.1.0'
+gem 'kaminari', '~> 0.15.1'
 gem 'selenium-webdriver'
 gem 'nokogiri'
-gem 'active_decorator'
+gem 'compass-rails', '~> 1.1.3'
+gem 'active_decorator', '~> 0.3.4'
+gem 'squeel', '~> 1.1.1'
 gem 'active_attr'
+gem 'delayed_job_active_record', '~> 4.0.0'
+gem "slim-rails" if yes?('Use slim?')
+gem "polyamorous", :github => "activerecord-hackery/polyamorous"
+# gem 'whenever', require: false if yes?('Use whenever?')
+gem "polyamorous", :github => "activerecord-hackery/polyamorous"
 
-use_bootstrap = if yes?('Use Bootstrap?')
+use_bootstrap = if yes?('Use sass-bootstrap?')
                   uncomment_lines 'Gemfile', "gem 'therubyracer'"
-                  gem 'less-rails'
-                  gem 'twitter-bootstrap-rails'
+                  gem 'bootstrap-sass'
                   true
                 else
                   false
                 end
-
-gem 'whenever', require: false if yes?('Use whenever?')
 
 gem_group :development, :test do
   gem 'rspec-rails'
   gem "factory_girl_rails"
   gem 'capybara'
   gem 'capybara-webkit'
+  gem 'shoulda-matchers'
+  gem 'guard-rspec', require: false
+  gem 'factory_girl_rails'
+  gem 'parallel_tests'
 end
 
 gem_group :development do
   gem 'pry-rails'
   gem 'better_errors'
-  gem "binding_of_caller"
-  gem 'spring'
   gem 'letter_opener'
   gem 'annotate'
   gem 'thin'
+  gem 'bullet'
+  gem 'quiet_assets'
 end
 
-gem_group :test do
-  gem 'database_cleaner'
-  gem 'timecop'
-  gem 'launchy'
-  gem 'webmock', require: 'webmock/rspec'
-end
+run "sed -i -e \"s/gem 'turbolinks'/# gem 'turbolinks'/\" Gemfile"
 
 run_bundle
 generate 'kaminari:config'
@@ -52,19 +53,33 @@ generate 'rspec:install'
 remove_dir 'test'
 
 if use_bootstrap
-  generate 'bootstrap:install', 'less'
   generate 'simple_form:install', '--bootstrap'
-  if yes?("Use responsive layout?")
-    generate 'bootstrap:layout', 'application fluid'
-  else
-    generate 'bootstrap:layout', 'application fixed'
-    append_to_file 'app/assets/stylesheets/application.css' do
-      "body { padding-top:60px }"
-    end
+  run "sed \"12i *= require bootstrap/\" app/assets/stylesheets/application.css"
+  run "sed -i -e \"s/= require turbolinks/= require bootstrap/\" app/assets/javascripts/application.js"
+
+  create_file 'app/assets/stylesheets/base.css.scss' do
+     body = <<EOS
+@import "bootstrap";
+EOS
   end
+
   remove_file 'app/views/layouts/application.html.erb'
 else
   generate 'simple_form:install'
+end
+
+use_heroku = if yes?('Use heroku?')
+               gem 'rails_12factor', group: :production
+               true
+             else
+               false
+             end
+
+if use_heroku
+  if yes?('Deploy heroku staging?')
+    run 'heroku create --remote staging'
+    git push: 'staging master'
+  end
 end
 
 # Application settings
@@ -150,6 +165,18 @@ run "cp config/database.yml config/database.yml.sample"
 
 
 rake 'db:migrate:reset'
+
+# DB
+# ----------------------------------------------------------------
+rake 'db:drop'
+rake 'db:create'
+rake 'db:migrate'
+
+# Parallel test
+# ----------------------------------------------------------------
+rake 'parallel:create'
+rake 'parallel:prepare'
+
 
 # git
 # ----------------------------------------------------------------
