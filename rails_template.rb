@@ -1,5 +1,6 @@
 # coding: utf-8
 
+
 gem 'sorcery'
 gem 'simple_form', '~> 3.0.1'
 gem 'ransack', '~> 1.1.0'
@@ -10,14 +11,14 @@ gem 'compass-rails', '~> 1.1.3'
 gem 'active_decorator', '~> 0.3.4'
 gem 'squeel', '~> 1.1.1'
 gem 'active_attr'
-gem 'delayed_job_active_record', '~> 4.0.0'
-gem "polyamorous", :github => "activerecord-hackery/polyamorous"
+# gem 'delayed_job_active_record', '~> 4.0.0'
+# gem "polyamorous", :github => "activerecord-hackery/polyamorous"
 gem 'mini_magick'
 gem 'carrierwave'
 # gem 'whenever', require: false if yes?('Use whenever?')
 
-gem 'slim'
-gem 'slim-rails'
+# gem 'slim'
+# gem 'slim-rails'
 gem 'bootstrap-sass'
 use_bootstrap = true
 
@@ -29,7 +30,7 @@ gem_group :development, :test do
   gem 'shoulda-matchers'
   gem 'guard-rspec', require: false
   gem 'factory_girl_rails'
-  gem 'parallel_tests'
+  # gem 'parallel_tests'
 end
 
 gem_group :development do
@@ -40,19 +41,35 @@ gem_group :development do
   gem 'thin'
   gem 'bullet'
   gem 'quiet_assets'
+  # gem 'html2slim'
 end
 
-run %Q(sed "s/gem 'turbolinks'/# gem 'turbolinks'/" Gemfile)
-run "bundle install --path vendor/bundle"
+comment_lines 'Gemfile', /gem 'turbolinks'/
+uncomment_lines 'Gemfile', /gem 'therubyracer'/
+gsub_file 'app/views/layouts/application.html.erb', /, "data-turbolinks-track" => true /, ''
+
+run 'bundle install --path vendor/bundle'
 
 generate 'kaminari:config'
 generate 'rspec:install'
 remove_dir 'test'
 
+# run %Q(erb2slim app/views/layouts/application.html.erb app/views/layouts/application.html.slim && rm app/views/layouts/application.html.erb)
+
 if use_bootstrap
   generate 'simple_form:install', '--bootstrap'
-  run "sed \"12i *= require bootstrap/\" app/assets/stylesheets/application.css &> /dev/null"
-  run "sed \"s/= require turbolinks/= require bootstrap/\" app/assets/javascripts/application.js &> /dev/null"
+
+  remove_file 'app/assets/stylesheets/application.css'
+  create_file 'app/assets/stylesheets/application.css' do
+    body = <<EOS
+/*
+ *= require_self
+ *= require bootstrap
+ *= require_tree .
+ */
+EOS
+  end
+  gsub_file 'app/assets/javascripts/application.js', /= require turbolinks/, "= require bootstrap"
 
   create_file 'app/assets/stylesheets/base.css.scss' do
      body = <<EOS
@@ -65,16 +82,15 @@ end
 
 
 
-gem 'rails_12factor', group: :production
-run %Q(sed "s/# gem 'therubyracer'/gem 'therubyracer'/" Gemfile)
+#gem 'rails_12factor', group: :production
 
 run "bundle install --path vendor/bundle"
-use_heroku = true
+#use_heroku = true
 
-if use_heroku
-  run 'heroku create --remote staging'
-  git push: 'staging master  &> /dev/null'
-end
+#if use_heroku
+#  run 'heroku create --remote staging'
+#  git push: 'staging master  &> /dev/null'
+#end
 
 # Application settings
 # ----------------------------------------------------------------
@@ -158,18 +174,15 @@ end
 run "cp config/database.yml config/database.yml.sample"
 
 
-rake 'db:migrate:reset'
-
 # DB
 # ----------------------------------------------------------------
-rake 'db:drop'
 rake 'db:create'
 rake 'db:migrate'
 
 # Parallel test
 # ----------------------------------------------------------------
-rake 'parallel:create'
-rake 'parallel:prepare'
+# rake 'parallel:create'
+# rake 'parallel:prepare'
 
 
 # git
