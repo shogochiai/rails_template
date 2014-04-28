@@ -177,7 +177,7 @@ run "cp config/database.yml config/database.yml.sample"
 # DB
 # ----------------------------------------------------------------
 run 'be rake db:create'
-rub 'be rake db:migrate'
+run 'be rake db:migrate'
 
 # Parallel test
 # ----------------------------------------------------------------
