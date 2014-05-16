@@ -8,11 +8,10 @@ gem 'kaminari', '~> 0.15.1'
 gem 'selenium-webdriver'
 gem 'nokogiri'
 gem 'compass-rails', '~> 1.1.3'
-gem 'active_decorator', '~> 0.3.4'
-gem 'squeel', '~> 1.1.1'
-gem 'active_attr'
+# gem 'active_decorator', '~> 0.3.4'
+# gem 'active_attr'
 # gem 'delayed_job_active_record', '~> 4.0.0'
-# gem "polyamorous", :github => "activerecord-hackery/polyamorous"
+# このへん消しとくとrails4.1でpolyamorousバグに遭遇しない
 gem 'mini_magick'
 gem 'carrierwave'
 # gem 'whenever', require: false if yes?('Use whenever?')
@@ -41,6 +40,7 @@ gem_group :development do
   gem 'thin'
   gem 'bullet'
   gem 'quiet_assets'
+  gem 'binding_of_caller'
   # gem 'html2slim'
 end
 
@@ -131,6 +131,7 @@ create_file '.gitignore' do
 /.bundle
 /vendor/bundle
 /db/*.sqlite3
+/db/schema.rb
 /log/*.log
 /tmp
 .DS_Store
@@ -146,6 +147,18 @@ doc/
 .idea
 .secret
 /*.iml
+*.rbc
+capybara-*.html
+.rspec
+/public/system
+/coverage/
+/spec/tmp
+**.orig
+rerun.txt
+pickle-email-*.html
+config/initializers/secret_token.rb
+config/secrets.yml
+.rvmrc
 EOS
 end
 
@@ -161,19 +174,6 @@ route "root to: 'home#index'"
 empty_directory 'app/decorators'
 create_file 'app/decorators/.gitkeep'
 
-# Database settings
-# ----------------------------------------------------------------
-case gem_for_database
-  when 'mysql2'
-    run "sed -i -e \"s/#{app_name}_test/#{app_name}_test<%= ENV[\\'TEST_ENV_NUMBER\\']%>/g\" config/database.yml &> /dev/null"
-  when 'sqlite3'
-    run "sed -i -e \"s/db\\/test.sqlite3/db\\/test<%= ENV[\\'TEST_ENV_NUMBER\\']%>.sqlite3/g\" config/database.yml &> /dev/null"
-  else
-end
-
-run "cp config/database.yml config/database.yml.sample"
-
-
 # DB
 # ----------------------------------------------------------------
 run 'be rake db:create'
@@ -184,6 +184,9 @@ run 'be rake db:migrate'
 # rake 'parallel:create'
 # rake 'parallel:prepare'
 
+# GuardとFactoryGirlの設定もしたい
+# spec_helper.rb
+# config.include FactoryGirl::Syntax::Methods
 
 # git
 # ----------------------------------------------------------------
